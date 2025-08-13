@@ -17,8 +17,17 @@ export default function UsersPage() {
 
   useEffect(() => {
     api
-      .get("/admin/users")
-      .then((res) => setUsers(res.data))
+      .get("/api/me")
+      .then((res) => {
+        if (res.data.role !== "ADMIN") {
+          router.push("/dashboard");
+          return;
+        }
+        api
+          .get("/admin/users")
+          .then((r) => setUsers(r.data))
+          .catch(() => router.push("/login"));
+      })
       .catch(() => router.push("/login"));
   }, [router]);
 

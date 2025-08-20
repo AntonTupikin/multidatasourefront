@@ -44,8 +44,14 @@ export default function LoginPage() {
           Login
         </button>
       </form>
-      <p className="mt-4 text-sm">
-        No account? <a href="/register" className="text-blue-600">Register</a>
+      <p className="mt-4 text-sm flex items-center">
+        No account?
+        <button
+          onClick={() => router.push("/register")}
+          className="ml-2 px-3 py-1 bg-blue-600 text-white rounded transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          Register
+        </button>
       </p>
     </div>
   );

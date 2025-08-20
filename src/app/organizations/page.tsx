@@ -22,7 +22,8 @@ export default function OrganizationsPage() {
         router.push("/dashboard");
         return;
       }
-      setOrgs(res.data.organizationsResponses || []);
+      const orgsRes = await api.get("/api/organization");
+      setOrgs(orgsRes.data || []);
     } catch {
       router.push("/login");
     }

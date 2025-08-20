@@ -7,14 +7,12 @@ import { api } from "@/lib/api";
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    username: "",
     email: "",
     password: "",
-    role: "SUPERVISOR",
   });
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -29,24 +27,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10">
+    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Register</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          name="username"
-          type="text"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-          className="border p-2"
-        />
         <input
           name="email"
           type="email"
           placeholder="Email"
           value={form.email}
           onChange={handleChange}
-          className="border p-2"
+          className="border p-2 rounded"
         />
         <input
           name="password"
@@ -54,19 +44,12 @@ export default function RegisterPage() {
           placeholder="Password"
           value={form.password}
           onChange={handleChange}
-          className="border p-2"
+          className="border p-2 rounded"
         />
-        <select
-          name="role"
-          value={form.role}
-          onChange={handleChange}
-          className="border p-2"
-        >
-          <option value="SUPERVISOR">Supervisor</option>
-          <option value="ADMIN">Admin</option>
-        </select>
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button type="submit" className="bg-blue-600 text-white py-2">Register</button>
+        <button type="submit" className="bg-blue-600 text-white py-2 rounded">
+          Register
+        </button>
       </form>
       <p className="mt-4 text-sm">
         Already have an account? <a href="/login" className="text-blue-600">Login</a>

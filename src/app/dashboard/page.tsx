@@ -22,16 +22,16 @@ export default function DashboardPage() {
       return;
     }
     api
-      .get("/api/me")
+      .get("/api/users/me")
       .then((res) => setUser(res.data))
       .catch(() => router.push("/login"));
   }, [router]);
 
   return (
-    <div>
+    <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
       {user && (
-        <div className="mb-6">
+        <div className="space-y-2">
           <p>
             <strong>Username:</strong> {user.username}
           </p>

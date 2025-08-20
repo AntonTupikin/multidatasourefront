@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
@@ -15,28 +15,22 @@ export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [form, setForm] = useState({ title: "", inn: "" });
   const [message, setMessage] = useState("");
-
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
-      const res = await api.get("/api/organization");
-      setOrgs(res.data);
+      const res = await api.get("/api/users/me");
+      if (res.data.role !== "SUPERVISOR") {
+        router.push("/dashboard");
+        return;
+      }
+      setOrgs(res.data.organizationsResponses || []);
     } catch {
-      setOrgs([]);
+      router.push("/login");
     }
-  };
+  }, [router]);
 
   useEffect(() => {
-    api
-      .get("/api/me")
-      .then((res) => {
-        if (res.data.role !== "SUPERVISOR") {
-          router.push("/dashboard");
-          return;
-        }
-        load();
-      })
-      .catch(() => router.push("/login"));
-  }, [router]);
+    load();
+  }, [load]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,7 +39,10 @@ export default function OrganizationsPage() {
   const createOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/api/organization", form);
+      await api.post("/api/organization", {
+        title: form.title,
+        inn: Number(form.inn),
+      });
       setMessage("Organization created");
       setForm({ title: "", inn: "" });
       load();
@@ -55,20 +52,20 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <div>
+    <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">My Organizations</h1>
-      <table className="min-w-full border mb-6">
-        <thead>
+      <table className="min-w-full border mb-6 rounded">
+        <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2">Title</th>
-            <th className="border px-2">INN</th>
+            <th className="border px-2 py-1">Title</th>
+            <th className="border px-2 py-1">INN</th>
           </tr>
         </thead>
         <tbody>
           {orgs.map((o) => (
-            <tr key={o.id}>
-              <td className="border px-2">{o.title}</td>
-              <td className="border px-2">{o.inn}</td>
+            <tr key={o.id} className="odd:bg-white even:bg-gray-50">
+              <td className="border px-2 py-1">{o.title}</td>
+              <td className="border px-2 py-1">{o.inn}</td>
             </tr>
           ))}
         </tbody>
@@ -77,19 +74,19 @@ export default function OrganizationsPage() {
         <h2 className="text-xl font-semibold">Create organization</h2>
         <input
           name="title"
-          className="border p-2"
+          className="border p-2 rounded"
           placeholder="Title"
           value={form.title}
           onChange={handleChange}
         />
         <input
           name="inn"
-          className="border p-2"
+          className="border p-2 rounded"
           placeholder="INN"
           value={form.inn}
           onChange={handleChange}
         />
-        <button type="submit" className="bg-green-600 text-white py-2">
+        <button type="submit" className="bg-green-600 text-white py-2 rounded">
           Create
         </button>
         {message && <p className="text-sm mt-1">{message}</p>}

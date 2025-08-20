@@ -15,7 +15,7 @@ export default function NavBar() {
     setToken(stored);
     if (stored) {
       api
-        .get("/api/me")
+        .get("/api/users/me")
         .then((res) => setRole(res.data.role))
         .catch(() => setRole(null));
     }
@@ -31,14 +31,19 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="bg-gray-800 text-white p-4 flex gap-4">
+    <nav className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex gap-4 shadow-md">
       <Link href="/dashboard" className="hover:underline">
         Dashboard
       </Link>
       {role === "SUPERVISOR" && (
-        <Link href="/organizations" className="hover:underline">
-          Organizations
-        </Link>
+        <>
+          <Link href="/organizations" className="hover:underline">
+            Organizations
+          </Link>
+          <Link href="/employees" className="hover:underline">
+            Employees
+          </Link>
+        </>
       )}
       {role === "ADMIN" && (
         <Link href="/users" className="hover:underline">

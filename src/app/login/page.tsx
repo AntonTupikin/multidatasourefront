@@ -22,7 +22,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10">
+    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
@@ -30,17 +30,19 @@ export default function LoginPage() {
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="border p-2"
+          className="border p-2 rounded"
         />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border p-2"
+          className="border p-2 rounded"
         />
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button type="submit" className="bg-blue-600 text-white py-2">Login</button>
+        <button type="submit" className="bg-blue-600 text-white py-2 rounded">
+          Login
+        </button>
       </form>
       <p className="mt-4 text-sm">
         No account? <a href="/register" className="text-blue-600">Register</a>

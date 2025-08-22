@@ -31,21 +31,21 @@ export default function EmployeesPage() {
         email: form.email,
         password: form.password,
       });
-      setMessage("Employee created");
+      setMessage("Работник создан");
       setForm({ email: "", password: "" });
     } catch {
-      setMessage("Creation failed");
+      setMessage("Ошибка создания");
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-4">Create employee</h1>
+      <h1 className="text-2xl font-bold mb-4">Создать работника</h1>
       <form onSubmit={createEmployee} className="flex flex-col gap-4">
         <input
           name="email"
           type="email"
-          placeholder="Email"
+          placeholder="Электронная почта"
           value={form.email}
           onChange={handleChange}
           className="border p-2 rounded"
@@ -53,13 +53,13 @@ export default function EmployeesPage() {
         <input
           name="password"
           type="password"
-          placeholder="Password"
+          placeholder="Пароль"
           value={form.password}
           onChange={handleChange}
           className="border p-2 rounded"
         />
         <button type="submit" className="bg-green-600 text-white py-2 rounded">
-          Create
+          Создать
         </button>
         {message && <p className="text-sm mt-1">{message}</p>}
       </form>

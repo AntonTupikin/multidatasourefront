@@ -29,17 +29,17 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4">Панель управления</h1>
       {user && (
         <div className="space-y-2">
           <p>
-            <strong>Username:</strong> {user.username}
+            <strong>Имя пользователя:</strong> {user.username}
           </p>
           <p>
-            <strong>Email:</strong> {user.email}
+            <strong>Электронная почта:</strong> {user.email}
           </p>
           <p>
-            <strong>Role:</strong> {user.role}
+            <strong>Роль:</strong> {user.role}
           </p>
         </div>
       )}

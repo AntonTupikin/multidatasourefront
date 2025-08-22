@@ -17,40 +17,40 @@ export default function LoginPage() {
       localStorage.setItem("token", res.data.access_token);
       router.push("/dashboard");
     } catch {
-      setError("Invalid credentials");
+      setError("Неверные учетные данные");
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <h1 className="text-2xl font-bold mb-4">Вход</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="text"
-          placeholder="Username"
+          placeholder="Имя пользователя"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="border p-2 rounded"
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Пароль"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="border p-2 rounded"
         />
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button type="submit" className="bg-blue-600 text-white py-2 rounded">
-          Login
+          Войти
         </button>
       </form>
       <p className="mt-4 text-sm flex items-center">
-        No account?
+        Нет аккаунта?
         <button
           onClick={() => router.push("/register")}
           className="ml-2 px-3 py-1 bg-blue-600 text-white rounded transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
-          Register
+          Регистрация
         </button>
       </p>
     </div>

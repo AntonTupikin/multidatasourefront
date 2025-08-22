@@ -33,25 +33,25 @@ export default function NavBar() {
   return (
     <nav className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex gap-4 shadow-md">
       <Link href="/dashboard" className="hover:underline">
-        Dashboard
+        Панель
       </Link>
       {role === "SUPERVISOR" && (
         <>
           <Link href="/organizations" className="hover:underline">
-            Organizations
+            Организации
           </Link>
           <Link href="/employees" className="hover:underline">
-            Employees
+            Работники
           </Link>
         </>
       )}
       {role === "ADMIN" && (
         <Link href="/users" className="hover:underline">
-          Users
+          Пользователи
         </Link>
       )}
       <button onClick={logout} className="ml-auto hover:underline">
-        Logout
+        Выйти
       </button>
     </nav>
   );

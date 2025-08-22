@@ -33,13 +33,13 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-4">Users</h1>
+      <h1 className="text-2xl font-bold mb-4">Пользователи</h1>
       <table className="min-w-full border rounded">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2 py-1">Username</th>
-            <th className="border px-2 py-1">Email</th>
-            <th className="border px-2 py-1">Role</th>
+            <th className="border px-2 py-1">Имя пользователя</th>
+            <th className="border px-2 py-1">Электронная почта</th>
+            <th className="border px-2 py-1">Роль</th>
           </tr>
         </thead>
         <tbody>

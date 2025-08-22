@@ -44,27 +44,31 @@ export default function OrganizationsPage() {
         title: form.title,
         inn: Number(form.inn),
       });
-      setMessage("Organization created");
+      setMessage("Организация создана");
       setForm({ title: "", inn: "" });
       load();
     } catch {
-      setMessage("Creation failed");
+      setMessage("Ошибка создания");
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-4">My Organizations</h1>
+      <h1 className="text-2xl font-bold mb-4">Мои организации</h1>
       <table className="min-w-full border mb-6 rounded">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2 py-1">Title</th>
-            <th className="border px-2 py-1">INN</th>
+            <th className="border px-2 py-1">Название</th>
+            <th className="border px-2 py-1">ИНН</th>
           </tr>
         </thead>
         <tbody>
           {orgs.map((o) => (
-            <tr key={o.id} className="odd:bg-white even:bg-gray-50">
+            <tr
+              key={o.id}
+              onClick={() => router.push(`/organizations/${o.id}`)}
+              className="odd:bg-white even:bg-gray-50 cursor-pointer hover:bg-gray-100"
+            >
               <td className="border px-2 py-1">{o.title}</td>
               <td className="border px-2 py-1">{o.inn}</td>
             </tr>
@@ -72,23 +76,23 @@ export default function OrganizationsPage() {
         </tbody>
       </table>
       <form onSubmit={createOrg} className="flex flex-col gap-2 max-w-md">
-        <h2 className="text-xl font-semibold">Create organization</h2>
+        <h2 className="text-xl font-semibold">Создать организацию</h2>
         <input
           name="title"
           className="border p-2 rounded"
-          placeholder="Title"
+          placeholder="Название"
           value={form.title}
           onChange={handleChange}
         />
         <input
           name="inn"
           className="border p-2 rounded"
-          placeholder="INN"
+          placeholder="ИНН"
           value={form.inn}
           onChange={handleChange}
         />
         <button type="submit" className="bg-green-600 text-white py-2 rounded">
-          Create
+          Создать
         </button>
         {message && <p className="text-sm mt-1">{message}</p>}
       </form>

@@ -91,12 +91,22 @@ export default function OrganizationPage() {
   };
 
   const remove = async (employee: Employee) => {
-    const existing =
-      employee.organizationsResponses?.map((o) => o.id) || [];
-    await api.patch(`/api/employees/${employee.id}`, {
-      organizationIds: existing.filter((orgId) => orgId !== Number(id)),
-    });
-    load();
+    try {
+      const existing = employee.organizationsResponses?.map((o) => o.id) || [];
+      await api.patch(`/api/employees/${employee.id}`, {
+        organizationIds: existing.filter((orgId) => orgId !== Number(id)),
+      });
+      setOrg((prev) =>
+        prev
+          ? {
+              ...prev,
+              employees: prev.employees.filter((e) => e.id !== employee.id),
+            }
+          : prev,
+      );
+    } catch {
+      setMessage("Ошибка удаления");
+    }
   };
 
   return (
@@ -118,6 +128,7 @@ export default function OrganizationPage() {
                   <td className="border px-2 py-1">{e.email}</td>
                   <td className="border px-2 py-1 text-center">
                     <button
+                      type="button"
                       onClick={() => remove(e)}
                       className="text-sm bg-red-600 text-white px-2 py-1 rounded"
                     >
@@ -129,6 +140,7 @@ export default function OrganizationPage() {
             </tbody>
           </table>
           <button
+            type="button"
             onClick={toggleAdd}
             className="mb-4 bg-blue-600 text-white px-3 py-1 rounded"
           >
@@ -148,6 +160,7 @@ export default function OrganizationPage() {
                     >
                       <span>{e.email}</span>
                       <button
+                        type="button"
                         onClick={() => assign(e)}
                         className="text-sm bg-green-600 text-white px-2 py-1 rounded"
                       >

@@ -90,6 +90,15 @@ export default function OrganizationPage() {
     load();
   };
 
+  const remove = async (employee: Employee) => {
+    const existing =
+      employee.organizationsResponses?.map((o) => o.id) || [];
+    await api.patch(`/api/employees/${employee.id}`, {
+      organizationIds: existing.filter((orgId) => orgId !== Number(id)),
+    });
+    load();
+  };
+
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       {org && (
@@ -99,15 +108,22 @@ export default function OrganizationPage() {
           <table className="min-w-full border mb-6 rounded">
             <thead className="bg-gray-100">
               <tr>
-                <th className="border px-2 py-1">ID</th>
                 <th className="border px-2 py-1">Электронная почта</th>
+                <th className="border px-2 py-1">Действия</th>
               </tr>
             </thead>
-          <tbody>
+            <tbody>
               {org.employees?.map((e) => (
                 <tr key={e.id} className="odd:bg-white even:bg-gray-50">
-                  <td className="border px-2 py-1">{e.id}</td>
                   <td className="border px-2 py-1">{e.email}</td>
+                  <td className="border px-2 py-1 text-center">
+                    <button
+                      onClick={() => remove(e)}
+                      className="text-sm bg-red-600 text-white px-2 py-1 rounded"
+                    >
+                      Удалить
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

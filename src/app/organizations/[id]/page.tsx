@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 interface Employee {
   id: number;
   email: string;
-  organizationId?: number | null;
+  organizationsResponses?: { id: number }[];
 }
 
 interface Organization {
@@ -35,10 +35,10 @@ export default function OrganizationPage() {
         return;
       }
       const orgRes = await api.get(`/api/organization/${id}`);
-      const employeesRes = await api.post("/api/employees/getAll", {
-        filter: { organizationId: Number(id) },
+      const employeesRes = await api.get("/api/employees/getAll", {
+        params: { organizationId: Number(id) },
       });
-      setOrg({ ...orgRes.data, employees: employeesRes.data || [] });
+      setOrg({ ...orgRes.data, employees: employeesRes.data.content || [] });
     } catch {
       router.push("/login");
     }
@@ -55,9 +55,12 @@ export default function OrganizationPage() {
   const createEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post(`/api/organization/${id}/employees`, {
+      const created = await api.post("/api/employees", {
         email: form.email,
         password: form.password,
+      });
+      await api.patch(`/api/employees/${created.data.id}`, {
+        organizationIds: [Number(id)],
       });
       setMessage("Работник создан");
       setForm({ email: "", password: "" });
@@ -69,18 +72,21 @@ export default function OrganizationPage() {
 
   const toggleAdd = async () => {
     if (!showAdd) {
-      const res = await api.post("/api/employees/getAll");
-      const all: Employee[] = res.data || [];
-      setAvailable(all.filter((e) => e.organizationId !== Number(id)));
+      const res = await api.get("/api/employees/getAll", {
+        params: { organizationIdNot: Number(id) },
+      });
+      const all: Employee[] = res.data.content || [];
+      setAvailable(all);
     }
     setShowAdd(!showAdd);
   };
 
-  const assign = async (employeeId: number) => {
-    await api.put(`/api/employees/${employeeId}`, {
-      organizationId: Number(id),
+  const assign = async (employee: Employee) => {
+    const existing = employee.organizationsResponses?.map((o) => o.id) || [];
+    await api.patch(`/api/employees/${employee.id}`, {
+      organizationIds: [...existing, Number(id)],
     });
-    setAvailable((prev) => prev.filter((e) => e.id !== employeeId));
+    setAvailable((prev) => prev.filter((e) => e.id !== employee.id));
     load();
   };
 
@@ -126,7 +132,7 @@ export default function OrganizationPage() {
                     >
                       <span>{e.email}</span>
                       <button
-                        onClick={() => assign(e.id)}
+                        onClick={() => assign(e)}
                         className="text-sm bg-green-600 text-white px-2 py-1 rounded"
                       >
                         Назначить

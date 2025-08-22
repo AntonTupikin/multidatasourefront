@@ -82,7 +82,10 @@ export default function OrganizationPage() {
   };
 
   const assign = async (employee: Employee) => {
-    const existing = employee.organizationsResponses?.map((o) => o.id) || [];
+    // fetch actual organizations to preserve previous assignments
+    const detail = await api.get(`/api/employees/${employee.id}`);
+    const existing =
+      detail.data.organizationsResponses?.map((o: { id: number }) => o.id) || [];
     await api.patch(`/api/employees/${employee.id}`, {
       organizationIds: [...existing, Number(id)],
     });

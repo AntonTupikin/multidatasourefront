@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 interface Employee {
   id: number;
   email: string;
+  organizationId?: number | null;
 }
 
 interface Organization {
@@ -23,6 +24,8 @@ export default function OrganizationPage() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [available, setAvailable] = useState<Employee[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -64,6 +67,23 @@ export default function OrganizationPage() {
     }
   };
 
+  const toggleAdd = async () => {
+    if (!showAdd) {
+      const res = await api.post("/api/employees/getAll");
+      const all: Employee[] = res.data || [];
+      setAvailable(all.filter((e) => e.organizationId !== Number(id)));
+    }
+    setShowAdd(!showAdd);
+  };
+
+  const assign = async (employeeId: number) => {
+    await api.put(`/api/employees/${employeeId}`, {
+      organizationId: Number(id),
+    });
+    setAvailable((prev) => prev.filter((e) => e.id !== employeeId));
+    load();
+  };
+
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       {org && (
@@ -77,7 +97,7 @@ export default function OrganizationPage() {
                 <th className="border px-2 py-1">Электронная почта</th>
               </tr>
             </thead>
-            <tbody>
+          <tbody>
               {org.employees?.map((e) => (
                 <tr key={e.id} className="odd:bg-white even:bg-gray-50">
                   <td className="border px-2 py-1">{e.id}</td>
@@ -86,6 +106,39 @@ export default function OrganizationPage() {
               ))}
             </tbody>
           </table>
+          <button
+            onClick={toggleAdd}
+            className="mb-4 bg-blue-600 text-white px-3 py-1 rounded"
+          >
+            Добавить работника
+          </button>
+          {showAdd && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">
+                Доступные работники
+              </h3>
+              {available.length > 0 ? (
+                <ul className="border rounded">
+                  {available.map((e) => (
+                    <li
+                      key={e.id}
+                      className="flex justify-between items-center border-b last:border-b-0 px-2 py-1"
+                    >
+                      <span>{e.email}</span>
+                      <button
+                        onClick={() => assign(e.id)}
+                        className="text-sm bg-green-600 text-white px-2 py-1 rounded"
+                      >
+                        Назначить
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm">Нет работников</p>
+              )}
+            </div>
+          )}
         </>
       )}
       <form onSubmit={createEmployee} className="flex flex-col gap-2 max-w-md">

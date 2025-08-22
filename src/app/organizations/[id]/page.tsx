@@ -31,8 +31,11 @@ export default function OrganizationPage() {
         router.push("/dashboard");
         return;
       }
-      const res = await api.get(`/api/organization/${id}`);
-      setOrg({ ...res.data, employees: res.data.employees || [] });
+      const orgRes = await api.get(`/api/organization/${id}`);
+      const employeesRes = await api.post("/api/employees/getAll", {
+        filter: { organizationId: Number(id) },
+      });
+      setOrg({ ...orgRes.data, employees: employeesRes.data || [] });
     } catch {
       router.push("/login");
     }

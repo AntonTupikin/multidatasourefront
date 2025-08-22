@@ -22,7 +22,9 @@ export default function EmployeesPage() {
         router.push("/dashboard");
         return;
       }
-      const employeesRes = await api.get("/api/employees");
+      const employeesRes = await api.post("/api/employees/getAll", {
+        filter: {},
+      });
       setEmployees(employeesRes.data || []);
     } catch {
       router.push("/login");

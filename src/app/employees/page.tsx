@@ -58,14 +58,12 @@ export default function EmployeesPage() {
       <table className="min-w-full border mb-6 rounded">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2 py-1">ID</th>
             <th className="border px-2 py-1">Электронная почта</th>
           </tr>
         </thead>
         <tbody>
           {employees.map((e) => (
             <tr key={e.id} className="odd:bg-white even:bg-gray-50">
-              <td className="border px-2 py-1">{e.id}</td>
               <td className="border px-2 py-1">{e.email}</td>
             </tr>
           ))}

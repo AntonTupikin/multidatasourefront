@@ -23,7 +23,8 @@ export default function EmployeesPage() {
         return;
       }
       const employeesRes = await api.get("/api/employees/getAll");
-      setEmployees(employeesRes.data.content || []);
+      // backend now returns plain array instead of Page object
+      setEmployees(employeesRes.data || []);
     } catch {
       router.push("/login");
     }

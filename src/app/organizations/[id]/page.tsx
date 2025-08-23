@@ -38,7 +38,8 @@ export default function OrganizationPage() {
       const employeesRes = await api.get("/api/employees/getAll", {
         params: { organizationId: Number(id) },
       });
-      setOrg({ ...orgRes.data, employees: employeesRes.data.content || [] });
+      // backend now returns plain array instead of Page object
+      setOrg({ ...orgRes.data, employees: employeesRes.data || [] });
     } catch {
       router.push("/login");
     }
@@ -75,7 +76,8 @@ export default function OrganizationPage() {
       const res = await api.get("/api/employees/getAll", {
         params: { organizationIdNot: Number(id) },
       });
-      const all: Employee[] = res.data.content || [];
+      // API now returns array directly
+      const all: Employee[] = res.data || [];
       setAvailable(all);
     }
     setShowAdd(!showAdd);
@@ -95,9 +97,12 @@ export default function OrganizationPage() {
 
   const remove = async (employee: Employee) => {
     try {
-      const existing = employee.organizationsResponses?.map((o) => o.id) || [];
+      // fetch actual organizations to avoid dropping other assignments
+      const detail = await api.get(`/api/employees/${employee.id}`);
+      const existing =
+        detail.data.organizationsResponses?.map((o: { id: number }) => o.id) || [];
       await api.patch(`/api/employees/${employee.id}`, {
-        organizationIds: existing.filter((orgId) => orgId !== Number(id)),
+        organizationIds: existing.filter((orgId: number) => orgId !== Number(id)),
       });
       setOrg((prev) =>
         prev

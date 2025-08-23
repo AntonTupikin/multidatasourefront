@@ -22,9 +22,9 @@ export default function EmployeesPage() {
         router.push("/dashboard");
         return;
       }
-      const employeesRes = await api.get("/api/employees/getAll");
-      // backend now returns plain array instead of Page object
-      setEmployees(employeesRes.data || []);
+      const employeesRes = await api.get("/api/users");
+      // API returns a page object; extract content array
+      setEmployees(employeesRes.data?.content || []);
     } catch {
       router.push("/login");
     }
@@ -41,7 +41,7 @@ export default function EmployeesPage() {
   const createEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/api/employees", {
+      await api.post("/api/users", {
         email: form.email,
         password: form.password,
       });

@@ -7,7 +7,6 @@ import { api } from "@/lib/api";
 interface Employee {
   id: number;
   email: string;
-  organizationsResponses?: { id: number }[];
 }
 
 interface Organization {
@@ -60,8 +59,10 @@ export default function OrganizationPage() {
         email: form.email,
         password: form.password,
       });
-      await api.patch(`/api/employees/${created.data.id}`, {
-        organizationIds: [Number(id)],
+      // add the new employee to the organization by editing the organization
+      const existing = org?.employees.map((e) => e.id) || [];
+      await api.patch(`/api/organization/${id}`, {
+        employeeIds: [...existing, created.data.id],
       });
       setMessage("Работник создан");
       setForm({ email: "", password: "" });
@@ -84,12 +85,10 @@ export default function OrganizationPage() {
   };
 
   const assign = async (employee: Employee) => {
-    // fetch actual organizations to preserve previous assignments
-    const detail = await api.get(`/api/employees/${employee.id}`);
-    const existing =
-      detail.data.organizationsResponses?.map((o: { id: number }) => o.id) || [];
-    await api.patch(`/api/employees/${employee.id}`, {
-      organizationIds: [...existing, Number(id)],
+    // update organization with the new set of employees
+    const existing = org?.employees.map((e) => e.id) || [];
+    await api.patch(`/api/organization/${id}`, {
+      employeeIds: [...existing, employee.id],
     });
     setAvailable((prev) => prev.filter((e) => e.id !== employee.id));
     load();
@@ -97,12 +96,10 @@ export default function OrganizationPage() {
 
   const remove = async (employee: Employee) => {
     try {
-      // fetch actual organizations to avoid dropping other assignments
-      const detail = await api.get(`/api/employees/${employee.id}`);
-      const existing =
-        detail.data.organizationsResponses?.map((o: { id: number }) => o.id) || [];
-      await api.patch(`/api/employees/${employee.id}`, {
-        organizationIds: existing.filter((orgId: number) => orgId !== Number(id)),
+      // edit organization to remove the employee
+      const existing = org?.employees.map((e) => e.id) || [];
+      await api.patch(`/api/organization/${id}`, {
+        employeeIds: existing.filter((empId: number) => empId !== employee.id),
       });
       setOrg((prev) =>
         prev

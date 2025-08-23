@@ -34,7 +34,7 @@ export default function OrganizationPage() {
         return;
       }
       const orgRes = await api.get(`/api/organization/${id}`);
-      const employeesRes = await api.get("/api/employees/getAll", {
+      const employeesRes = await api.get("/api/employees", {
         params: { organizationId: Number(id) },
       });
       // backend now returns plain array instead of Page object
@@ -74,7 +74,7 @@ export default function OrganizationPage() {
 
   const toggleAdd = async () => {
     if (!showAdd) {
-      const res = await api.get("/api/employees/getAll", {
+      const res = await api.get("/api/employees", {
         params: { organizationIdNot: Number(id) },
       });
       // API now returns array directly

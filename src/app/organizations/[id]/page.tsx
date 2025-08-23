@@ -34,11 +34,14 @@ export default function OrganizationPage() {
         return;
       }
       const orgRes = await api.get(`/api/organization/${id}`);
-      const employeesRes = await api.get("/api/employees/getAll", {
+      const employeesRes = await api.get("/api/users", {
         params: { organizationId: Number(id) },
       });
-      // backend now returns plain array instead of Page object
-      setOrg({ ...orgRes.data, employees: employeesRes.data || [] });
+      // API returns a page object; extract content array
+      setOrg({
+        ...orgRes.data,
+        employees: employeesRes.data?.content || [],
+      });
     } catch {
       router.push("/login");
     }
@@ -55,14 +58,14 @@ export default function OrganizationPage() {
   const createEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const created = await api.post("/api/employees", {
+      const created = await api.post("/api/users", {
         email: form.email,
         password: form.password,
       });
       // add the new employee to the organization by editing the organization
       const existing = org?.employees.map((e) => e.id) || [];
       await api.patch(`/api/organization/${id}`, {
-        employeeIds: [...existing, created.data.id],
+        usersIds: [...existing, created.data.id],
       });
       setMessage("Работник создан");
       setForm({ email: "", password: "" });
@@ -74,11 +77,11 @@ export default function OrganizationPage() {
 
   const toggleAdd = async () => {
     if (!showAdd) {
-      const res = await api.get("/api/employees/getAll", {
-        params: { organizationIdNot: Number(id) },
+      const res = await api.get("/api/users", {
+        params: { notLinkedToOrganizationId: Number(id) },
       });
-      // API now returns array directly
-      const all: Employee[] = res.data || [];
+      // API returns a page object; extract content array
+      const all: Employee[] = res.data?.content || [];
       setAvailable(all);
     }
     setShowAdd(!showAdd);
@@ -88,7 +91,7 @@ export default function OrganizationPage() {
     // update organization with the new set of employees
     const existing = org?.employees.map((e) => e.id) || [];
     await api.patch(`/api/organization/${id}`, {
-      employeeIds: [...existing, employee.id],
+      usersIds: [...existing, employee.id],
     });
     setAvailable((prev) => prev.filter((e) => e.id !== employee.id));
     load();
@@ -99,7 +102,7 @@ export default function OrganizationPage() {
       // edit organization to remove the employee
       const existing = org?.employees.map((e) => e.id) || [];
       await api.patch(`/api/organization/${id}`, {
-        employeeIds: existing.filter((empId: number) => empId !== employee.id),
+        usersIds: existing.filter((empId: number) => empId !== employee.id),
       });
       setOrg((prev) =>
         prev

@@ -28,20 +28,34 @@ export default function DashboardPage() {
   }, [router]);
 
   return (
-    <div className="max-w-xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+    <div className="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Панель управления</h1>
       {user && (
-        <div className="space-y-2">
-          <p>
-            <strong>Имя пользователя:</strong> {user.username}
-          </p>
-          <p>
-            <strong>Электронная почта:</strong> {user.email}
-          </p>
-          <p>
-            <strong>Роль:</strong> {user.role}
-          </p>
-        </div>
+        <>
+          <div className="space-y-2 mb-6">
+            <p>
+              <strong>Имя пользователя:</strong> {user.username}
+            </p>
+            <p>
+              <strong>Электронная почта:</strong> {user.email}
+            </p>
+            <p>
+              <strong>Роль:</strong> {user.role}
+            </p>
+          </div>
+          {user.role === "SUPERVISOR" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <a href="/organizations" className="p-4 rounded border hover:bg-gray-50">Организации</a>
+              <a href="/clients" className="p-4 rounded border hover:bg-gray-50">Клиенты</a>
+              <a href="/projects" className="p-4 rounded border hover:bg-gray-50">Проекты</a>
+            </div>
+          )}
+          {user.role === "ADMIN" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <a href="/users" className="p-4 rounded border hover:bg-gray-50">Пользователи</a>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

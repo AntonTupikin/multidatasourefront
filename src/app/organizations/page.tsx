@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 interface Organization {
   id: number;
   title: string;
-  inn: string;
+  inn: number;
 }
 
 export default function OrganizationsPage() {

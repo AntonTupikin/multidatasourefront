@@ -40,6 +40,12 @@ export default function NavBar() {
           <Link href="/organizations" className="hover:underline">
             Организации
           </Link>
+          <Link href="/clients" className="hover:underline">
+            Клиенты
+          </Link>
+          <Link href="/projects" className="hover:underline">
+            Проекты
+          </Link>
           <Link href="/employees" className="hover:underline">
             Работники
           </Link>

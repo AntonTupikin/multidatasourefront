@@ -41,7 +41,7 @@ export default function EmployeesPage() {
   const createEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/api/users", {
+      await api.post("/api/register", {
         email: form.email,
         password: form.password,
       });

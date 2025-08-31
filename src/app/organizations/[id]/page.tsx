@@ -4,16 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
 
-interface Employee {
+interface User {
   id: number;
+  username?: string;
   email: string;
+  role?: string;
 }
 
 interface Organization {
   id: number;
   title: string;
-  inn: string;
-  employees: Employee[];
+  inn: number;
+  users: User[];
 }
 
 export default function OrganizationPage() {
@@ -24,7 +26,7 @@ export default function OrganizationPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [available, setAvailable] = useState<Employee[]>([]);
+  const [available, setAvailable] = useState<User[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -34,13 +36,13 @@ export default function OrganizationPage() {
         return;
       }
       const orgRes = await api.get(`/api/organization/${id}`);
-      const employeesRes = await api.get("/api/users", {
+      const usersRes = await api.get("/api/users", {
         params: { organizationId: Number(id) },
       });
       // API returns a page object; extract content array
       setOrg({
         ...orgRes.data,
-        employees: employeesRes.data?.content || [],
+        users: usersRes.data?.content || [],
       });
     } catch {
       router.push("/login");
@@ -58,12 +60,12 @@ export default function OrganizationPage() {
   const createEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const created = await api.post("/api/users", {
+      const created = await api.post("/api/register", {
         email: form.email,
         password: form.password,
       });
-      // add the new employee to the organization by editing the organization
-      const existing = org?.employees.map((e) => e.id) || [];
+      // add the new user to the organization by editing the organization
+      const existing = org?.users.map((e) => e.id) || [];
       await api.patch(`/api/organization/${id}`, {
         usersIds: [...existing, created.data.id],
       });
@@ -81,34 +83,34 @@ export default function OrganizationPage() {
         params: { notLinkedToOrganizationId: Number(id) },
       });
       // API returns a page object; extract content array
-      const all: Employee[] = res.data?.content || [];
+      const all: User[] = res.data?.content || [];
       setAvailable(all);
     }
     setShowAdd(!showAdd);
   };
 
-  const assign = async (employee: Employee) => {
-    // update organization with the new set of employees
-    const existing = org?.employees.map((e) => e.id) || [];
+  const assign = async (user: User) => {
+    // update organization with the new set of users
+    const existing = org?.users.map((e) => e.id) || [];
     await api.patch(`/api/organization/${id}`, {
-      usersIds: [...existing, employee.id],
+      usersIds: [...existing, user.id],
     });
-    setAvailable((prev) => prev.filter((e) => e.id !== employee.id));
+    setAvailable((prev) => prev.filter((e) => e.id !== user.id));
     load();
   };
 
-  const remove = async (employee: Employee) => {
+  const remove = async (user: User) => {
     try {
-      // edit organization to remove the employee
-      const existing = org?.employees.map((e) => e.id) || [];
+      // edit organization to remove the user
+      const existing = org?.users.map((e) => e.id) || [];
       await api.patch(`/api/organization/${id}`, {
-        usersIds: existing.filter((empId: number) => empId !== employee.id),
+        usersIds: existing.filter((empId: number) => empId !== user.id),
       });
       setOrg((prev) =>
         prev
           ? {
               ...prev,
-              employees: prev.employees.filter((e) => e.id !== employee.id),
+              users: prev.users.filter((e) => e.id !== user.id),
             }
           : prev,
       );
@@ -131,13 +133,13 @@ export default function OrganizationPage() {
               </tr>
             </thead>
             <tbody>
-              {org.employees?.map((e) => (
-                <tr key={e.id} className="odd:bg-white even:bg-gray-50">
-                  <td className="border px-2 py-1">{e.email}</td>
+              {org.users?.map((u) => (
+                <tr key={u.id} className="odd:bg-white even:bg-gray-50">
+                  <td className="border px-2 py-1">{u.email}</td>
                   <td className="border px-2 py-1 text-center">
                     <button
                       type="button"
-                      onClick={() => remove(e)}
+                      onClick={() => remove(u)}
                       className="text-sm bg-red-600 text-white px-2 py-1 rounded"
                     >
                       Удалить

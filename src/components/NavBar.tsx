@@ -48,6 +48,9 @@ return (
           <Link href="/clients" className="hover:underline">
             Клиенты
           </Link>
+          <Link href="/partners" className="hover:underline">
+            Контрагенты
+          </Link>
           <Link href="/projects" className="hover:underline">
             Проекты
           </Link>

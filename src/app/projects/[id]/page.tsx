@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
@@ -24,6 +25,27 @@ interface EstimateItem {
   category?: string;
   positionNo?: number;
   total?: string | number;
+  businessPartnerId?: number | null;
+  businessPartnerName?: string | null;
+}
+
+interface EstimateItemHistory {
+  id: number;
+  itemId: number;
+  changedBy?: number | null;
+  changedByUsername?: string | null;
+  changedAt: string;
+  oldUnit?: string | null;
+  newUnit?: string | null;
+  oldQuantity?: string | number | null;
+  newQuantity?: string | number | null;
+  oldUnitPrice?: string | number | null;
+  newUnitPrice?: string | number | null;
+}
+
+interface EstimateItemWithHistory {
+  item: EstimateItem;
+  history: EstimateItemHistory[];
 }
 
 interface Estimate {
@@ -48,6 +70,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [newItem, setNewItem] = useState<Partial<EstimateItem>>({ materialName: "", unit: "", quantity: 1, unitPrice: 0 });
+  const [partners, setPartners] = useState<Array<{ id: number; name: string }>>([]);
   const [createForm, setCreateForm] = useState({ title: "", currency: "RUB", notes: "" });
   const [loading, setLoading] = useState(true);
   const [team, setTeam] = useState<Employee[]>([]);
@@ -55,6 +78,11 @@ export default function ProjectDetailPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddItemForm, setShowAddItemForm] = useState(false);
   const [showCreateEstimate, setShowCreateEstimate] = useState(false);
+  // Локальные изменения по строкам: itemId -> измененные поля
+  const [edits, setEdits] = useState<Record<number, Partial<EstimateItem>>>({});
+  const [openItemId, setOpenItemId] = useState<number | null>(null);
+  const [historyByItem, setHistoryByItem] = useState<Record<number, EstimateItemHistory[]>>({});
+  const [historyLoadingId, setHistoryLoadingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,6 +111,13 @@ export default function ProjectDetailPage() {
         setEstimate(est.data);
       } catch {
         setEstimate(null);
+      }
+
+      try {
+        const ps = await api.get(`/api/partners`);
+        setPartners(ps.data || []);
+      } catch {
+        setPartners([]);
       }
 
       try {
@@ -124,6 +159,7 @@ export default function ProjectDetailPage() {
       unitPrice: newItem.unitPrice ? Number(newItem.unitPrice) : undefined,
       category: newItem.category || undefined,
       positionNo: newItem.positionNo || undefined,
+      businessPartnerId: newItem.businessPartnerId || undefined,
     });
     setEstimate({ ...estimate, items: [...estimate.items, res.data] });
     setNewItem({ materialName: "", unit: "", quantity: 1, unitPrice: 0 });
@@ -133,6 +169,67 @@ export default function ProjectDetailPage() {
     if (!estimate) return;
     await api.delete(`/api/estimates/${estimate.id}/items/${itemId}`);
     setEstimate({ ...estimate, items: estimate.items.filter((i) => i.id !== itemId) });
+  };
+
+  const setEditField = (item: EstimateItem, field: keyof EstimateItem, raw: any) => {
+    // нормализуем числовые поля
+    let value: any = raw;
+    if (field === "quantity" || field === "unitPrice" || field === "positionNo" || field === "businessPartnerId") {
+      value = raw === "" ? "" : Number(raw);
+    }
+    const original = (item as any)[field];
+    const changed = String(value) !== String(original ?? "");
+    setEdits((prev) => {
+      const current = { ...(prev[item.id] || {}) } as any;
+      if (changed) current[field] = value; else delete current[field];
+      const next = { ...prev } as any;
+      if (Object.keys(current).length) next[item.id] = current; else delete next[item.id];
+      return next;
+    });
+  };
+
+  const saveEdits = async (item: EstimateItem) => {
+    if (!estimate) return;
+    const changes = edits[item.id];
+    if (!changes || Object.keys(changes).length === 0) return;
+    const payload: any = {};
+    if ("materialName" in changes) payload.materialName = changes.materialName;
+    if ("unit" in changes) payload.unit = changes.unit;
+    if ("quantity" in changes) payload.quantity = changes.quantity === "" ? null : Number(changes.quantity as any);
+    if ("unitPrice" in changes) payload.unitPrice = changes.unitPrice === "" ? null : Number(changes.unitPrice as any);
+    if ("category" in changes) payload.category = changes.category;
+    if ("businessPartnerId" in changes) payload.businessPartnerId = (changes as any).businessPartnerId === "" ? null : Number((changes as any).businessPartnerId);
+    if ("positionNo" in changes) payload.positionNo = changes.positionNo;
+    const res = await api.patch(`/api/estimates/${estimate.id}/items/${item.id}`, payload);
+    const updated = res.data as EstimateItem;
+    setEstimate({
+      ...estimate,
+      items: estimate.items.map((i) => (i.id === item.id ? { ...i, ...updated } : i)),
+    });
+    setEdits((prev) => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
+    });
+  };
+
+  const toggleHistory = async (itemId: number) => {
+    if (!estimate) return;
+    if (openItemId === itemId) {
+      setOpenItemId(null);
+      return;
+    }
+    setOpenItemId(itemId);
+    if (!historyByItem[itemId]) {
+      try {
+        setHistoryLoadingId(itemId);
+        const res = await api.get(`/api/estimates/${estimate.id}/items/${itemId}`);
+        const data = res.data as EstimateItemWithHistory;
+        setHistoryByItem((prev) => ({ ...prev, [itemId]: data.history || [] }));
+      } finally {
+        setHistoryLoadingId(null);
+      }
+    }
   };
 
   const toggleAdd = async () => {
@@ -283,7 +380,8 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          <table className="table-box mb-6">
+          <div className="overflow-x-auto rounded-lg mb-6">
+          <table className="table-box w-full">
             <thead className="table-head">
               <tr>
                 <th className="th">Позиция</th>
@@ -292,32 +390,167 @@ export default function ProjectDetailPage() {
                 <th className="th">Кол-во</th>
                 <th className="th">Цена</th>
                 <th className="th">Категория</th>
+                <th className="th">Контрагент</th>
                 <th className="th">Сумма</th>
                 <th className="th">Действия</th>
               </tr>
             </thead>
             <tbody className="tbody-divide">
-              {estimate.items?.map((it) => (
-                <tr key={it.id} className="row-hover">
-                  <td className="td">{it.positionNo}</td>
-                  <td className="td">{it.materialName}</td>
-                  <td className="td">{it.unit}</td>
-                  <td className="td">{it.quantity}</td>
-                  <td className="td">{it.unitPrice}</td>
-                  <td className="td">{it.category}</td>
-                  <td className="td">{it.total}</td>
-                  <td className="td">
-                    <button
-                      onClick={() => deleteItem(it.id)}
-                      className="btn btn-danger btn-sm"
-                    >
-                      Удалить
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {estimate.items?.map((it) => {
+                const changes = edits[it.id];
+                const hasChanges = !!changes && Object.keys(changes).length > 0;
+                const isOpen = openItemId === it.id;
+                const inputClasses = {
+                  base: "p-1 rounded bg-gray-50 border-0 focus:outline-none focus:ring-0 focus:border-transparent",
+                  small: "w-20",
+                  full: "w-full",
+                };
+                return (
+                  <>
+                    <tr key={it.id} className="row-hover">
+                      <td className="td">
+                        <input
+                          type="number"
+                          className={`${inputClasses.base} ${inputClasses.small}`}
+                          value={String(changes?.positionNo ?? it.positionNo ?? "")}
+                          onChange={(e) => setEditField(it, "positionNo", e.target.value)}
+                        />
+                      </td>
+                      <td className="td">
+                        <input
+                          className={`${inputClasses.base} ${inputClasses.small}`}
+                          value={String(changes?.materialName ?? it.materialName ?? "")}
+                          onChange={(e) => setEditField(it, "materialName", e.target.value)}
+                        />
+                      </td>
+                      <td className="td">
+                        <input
+                          className={`${inputClasses.base} ${inputClasses.small}`}
+                          value={String(changes?.unit ?? it.unit ?? "")}
+                          onChange={(e) => setEditField(it, "unit", e.target.value)}
+                        />
+                      </td>
+                      <td className="td">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className={`${inputClasses.base} ${inputClasses.small}`}
+                          value={String(changes?.quantity ?? it.quantity ?? "")}
+                          onChange={(e) => setEditField(it, "quantity", e.target.value)}
+                        />
+                      </td>
+                      <td className="td">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className={`${inputClasses.base} ${inputClasses.small}`}
+                          value={String(changes?.unitPrice ?? it.unitPrice ?? "")}
+                          onChange={(e) => setEditField(it, "unitPrice", e.target.value)}
+                        />
+                      </td>
+                    <td className="td">
+                      <input
+                        className={`${inputClasses.base} ${inputClasses.small}`}
+                        value={String(changes?.category ?? it.category ?? "")}
+                        onChange={(e) => setEditField(it, "category", e.target.value)}
+                      />
+                    </td>
+                    <td className="td">
+                      <select
+                        className={`${inputClasses.base} max-w-[220px]`}
+                        value={String(changes?.businessPartnerId ?? it.businessPartnerId ?? "")}
+                        onChange={(e) => setEditField(it, "businessPartnerId", e.target.value)}
+                      >
+                        <option value="">—</option>
+                        {partners.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="td">{it.total}</td>
+                      <td className="td space-x-2">
+                        {hasChanges && (
+                          <button onClick={() => saveEdits(it)} className="btn btn-success btn-sm" type="button">
+                            Сохранить
+                          </button>
+                        )}
+                        <button
+                          onClick={() => toggleHistory(it.id)}
+                          className="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-700 text-sm"
+                          type="button"
+                        >
+                          {isOpen ? "Скрыть историю" : "История"}
+                        </button>
+                        <button
+                          onClick={() => deleteItem(it.id)}
+                          className="btn btn-danger btn-sm"
+                          type="button"
+                        >
+                          Удалить
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr>
+                        <td className="td bg-gray-50" colSpan={9}>
+                          {historyLoadingId === it.id ? (
+                            <div className="text-sm text-gray-500">Загрузка истории…</div>
+                          ) : (
+                            <div>
+                              <div className="text-sm text-gray-700 mb-2">История изменений</div>
+                              {historyByItem[it.id]?.length ? (
+                                <ul className="space-y-1">
+                                  {historyByItem[it.id].map((h) => (
+                                    <li key={h.id} className="text-sm text-gray-700">
+                                      <span className="text-gray-500">{new Date(h.changedAt).toLocaleString()}:</span>
+                                      {" "}
+                                      {h.oldUnit !== h.newUnit && (
+                                        <span>
+                                          Ед.: {h.oldUnit ?? "—"} → {h.newUnit ?? "—"}; {" "}
+                                          {h.changedBy ? (
+                                            <Link href={`/users/${h.changedBy}`} className="text-blue-600 underline">
+                                              {h.changedByUsername || `пользователь #${h.changedBy}`}
+                                            </Link>
+                                          ) : null}
+                                        </span>
+                                      )}
+                                      {String(h.oldQuantity ?? "") !== String(h.newQuantity ?? "") && (
+                                        <span>
+                                          Кол-во: {String(h.oldQuantity ?? "—")} → {String(h.newQuantity ?? "—")}; {" "}
+                                          {h.changedBy ? (
+                                            <Link href={`/users/${h.changedBy}`} className="text-blue-600 underline">
+                                              {h.changedByUsername || `пользователь #${h.changedBy}`}
+                                            </Link>
+                                          ) : null}
+                                          {" "}
+                                        </span>)}
+                                      {String(h.oldUnitPrice ?? "") !== String(h.newUnitPrice ?? "") && (
+                                        <span>
+                                          Цена: {String(h.oldUnitPrice ?? "—")} → {String(h.newUnitPrice ?? "—")}; {" "}
+                                          {h.changedBy ? (
+                                            <Link href={`/users/${h.changedBy}`} className="text-blue-600 underline">
+                                              {h.changedByUsername || `пользователь #${h.changedBy}`}
+                                            </Link>
+                                          ) : null}
+                                        </span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="text-sm text-gray-400">Нет записей истории</div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
+          </div>
 
           <div>
             <button
@@ -330,7 +563,7 @@ export default function ProjectDetailPage() {
             {showAddItemForm && (
               <form onSubmit={addItem} className="flex flex-col gap-2 max-w-3xl">
                 <h3 className="text-lg font-semibold">Добавить позицию</h3>
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
                   <input
                     placeholder="Материал"
                     className="border p-2 rounded"
@@ -366,6 +599,16 @@ export default function ProjectDetailPage() {
                     value={newItem.category as string}
                     onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
                   />
+                  <select
+                    className="border p-2 rounded"
+                    value={String(newItem.businessPartnerId ?? "")}
+                    onChange={(e) => setNewItem({ ...newItem, businessPartnerId: e.target.value ? Number(e.target.value) : undefined })}
+                  >
+                    <option value="">Контрагент — не выбран</option>
+                    {partners.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
                   <input
                     type="number"
                     placeholder="№"

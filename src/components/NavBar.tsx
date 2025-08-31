@@ -24,14 +24,19 @@ export default function NavBar() {
   if (!token) {
     return null;
   }
-
+  const me = () => {
+    router.push("/projects");
+  };
   const logout = () => {
     localStorage.removeItem("token");
     router.push("/login");
   };
 
-  return (
-    <nav className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex gap-4 shadow-md">
+return (
+    <nav className="bg-blue-400 text-white p-4 flex items-center gap-4 shadow-md">
+      <Link href="/dashboard" className="font-black text-3xl tracking-wide mr-2 hover:opacity-90">
+        CraneCRM
+      </Link>
       <Link href="/dashboard" className="hover:underline">
         Панель
       </Link>

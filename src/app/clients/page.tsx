@@ -33,6 +33,7 @@ export default function ClientsPage() {
     bankAccount: "",
   });
   const [message, setMessage] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -95,24 +96,21 @@ export default function ClientsPage() {
   return (
     <div className="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Клиенты</h1>
-      <table className="min-w-full border mb-6 rounded">
-        <thead className="bg-gray-100">
+      <table className="min-w-full mb-6 overflow-hidden rounded-lg bg-white shadow-sm">
+        <thead className="bg-gray-50">
           <tr>
-            <th className="border px-2 py-1">Email</th>
-            <th className="border px-2 py-1">Телефон</th>
-            <th className="border px-2 py-1">Действия</th>
+            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Email</th>
+            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Телефон</th>
+            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Действия</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-100">
           {clients.map((c) => (
-            <tr key={c.id} className="odd:bg-white even:bg-gray-50">
-              <td className="border px-2 py-1">{c.email}</td>
-              <td className="border px-2 py-1">{c.phone}</td>
-              <td className="border px-2 py-1 text-center">
-                <button
-                  onClick={() => remove(c.id)}
-                  className="text-sm bg-red-600 text-white px-2 py-1 rounded"
-                >
+            <tr key={c.id} className="hover:bg-gray-50">
+              <td className="px-4 py-3 text-sm text-gray-800">{c.email}</td>
+              <td className="px-4 py-3 text-sm text-gray-800">{c.phone}</td>
+              <td className="px-4 py-3 text-sm text-gray-800 text-center">
+                <button onClick={() => remove(c.id)} className="btn btn-danger btn-sm">
                   Удалить
                 </button>
               </td>
@@ -120,73 +118,80 @@ export default function ClientsPage() {
           ))}
         </tbody>
       </table>
-      <form onSubmit={createClient} className="flex flex-col gap-2 max-w-md">
-        <h2 className="text-xl font-semibold">Создать клиента</h2>
-        <select
-          name="profileType"
-          value={form.profileType}
-          onChange={handleChange}
-          className="border p-2 rounded"
-          required
-        >
-          <option value="INDIVIDUAL">Физическое лицо</option>
-        </select>
-        <input
-          name="email"
-          type="email"
-          placeholder="Электронная почта"
-          value={form.email}
-          onChange={handleChange}
-          className="border p-2 rounded"
-          required
-        />
-        <input
-          name="phone"
-          type="tel"
-          placeholder="Телефон"
-          value={form.phone}
-          onChange={handleChange}
-          className="border p-2 rounded"
-          required
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <input
-            name="firstName"
-            placeholder="Имя"
-            value={form.firstName}
-            onChange={handleChange}
-            className="border p-2 rounded"
-            required
-          />
-          <input
-            name="lastName"
-            placeholder="Фамилия"
-            value={form.lastName}
-            onChange={handleChange}
-            className="border p-2 rounded"
-            required
-          />
-        </div>
-        <input
-          name="inn"
-          placeholder="ИНН"
-          value={form.inn}
-          onChange={handleChange}
-          className="border p-2 rounded"
-          required
-        />
-        <input
-          name="bankAccount"
-          placeholder="Банковский счет (необязательно)"
-          value={form.bankAccount}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
-        <button type="submit" className="bg-green-600 text-white py-2 rounded">
-          Создать
+      <div>
+        <button type="button" onClick={() => setShowForm((v) => !v)} className="mb-3 btn btn-success btn-md">
+          {showForm ? "Скрыть форму" : "Создать клиента"}
         </button>
-        {message && <p className="text-sm mt-1">{message}</p>}
-      </form>
+        {showForm && (
+          <form onSubmit={createClient} className="flex flex-col gap-2 max-w-md">
+            <h2 className="text-xl font-semibold">Создать клиента</h2>
+            <select
+              name="profileType"
+              value={form.profileType}
+              onChange={handleChange}
+              className="border p-2 rounded"
+              required
+            >
+              <option value="INDIVIDUAL">Физическое лицо</option>
+            </select>
+            <input
+              name="email"
+              type="email"
+              placeholder="Электронная почта"
+              value={form.email}
+              onChange={handleChange}
+              className="border p-2 rounded"
+              required
+            />
+            <input
+              name="phone"
+              type="tel"
+              placeholder="Телефон"
+              value={form.phone}
+              onChange={handleChange}
+              className="border p-2 rounded"
+              required
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <input
+                name="firstName"
+                placeholder="Имя"
+                value={form.firstName}
+                onChange={handleChange}
+                className="border p-2 rounded"
+                required
+              />
+              <input
+                name="lastName"
+                placeholder="Фамилия"
+                value={form.lastName}
+                onChange={handleChange}
+                className="border p-2 rounded"
+                required
+              />
+            </div>
+            <input
+              name="inn"
+              placeholder="ИНН"
+              value={form.inn}
+              onChange={handleChange}
+              className="border p-2 rounded"
+              required
+            />
+            <input
+              name="bankAccount"
+              placeholder="Банковский счет (необязательно)"
+              value={form.bankAccount}
+              onChange={handleChange}
+              className="border p-2 rounded"
+            />
+            <button type="submit" className="btn btn-success btn-md">
+              Создать
+            </button>
+            {message && <p className="text-sm mt-1">{message}</p>}
+          </form>
+        )}
+      </div>
     </div>
   );
 }

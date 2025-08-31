@@ -35,6 +35,11 @@ interface Estimate {
   items: EstimateItem[];
 }
 
+interface Employee {
+  id: number;
+  email: string;
+}
+
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -45,6 +50,11 @@ export default function ProjectDetailPage() {
   const [newItem, setNewItem] = useState<Partial<EstimateItem>>({ materialName: "", unit: "", quantity: 1, unitPrice: 0 });
   const [createForm, setCreateForm] = useState({ title: "", currency: "RUB", notes: "" });
   const [loading, setLoading] = useState(true);
+  const [team, setTeam] = useState<Employee[]>([]);
+  const [available, setAvailable] = useState<Employee[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showAddItemForm, setShowAddItemForm] = useState(false);
+  const [showCreateEstimate, setShowCreateEstimate] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,6 +83,14 @@ export default function ProjectDetailPage() {
         setEstimate(est.data);
       } catch {
         setEstimate(null);
+      }
+
+      try {
+        // load assigned employees using users filter by project
+        const teamRes = await api.get(`/api/users`, { params: { projectId: id, size: 100 } });
+        setTeam(teamRes.data?.content || []);
+      } catch {
+        setTeam([]);
       }
     } catch {
       router.push("/login");
@@ -117,6 +135,34 @@ export default function ProjectDetailPage() {
     setEstimate({ ...estimate, items: estimate.items.filter((i) => i.id !== itemId) });
   };
 
+  const toggleAdd = async () => {
+    if (!showAdd) {
+      try {
+        const res = await api.get(`/api/users`, { params: { notAssignedToProjectId: id, size: 100 } });
+        setAvailable(res.data?.content || []);
+      } catch {
+        setAvailable([]);
+      }
+    }
+    setShowAdd(!showAdd);
+  };
+
+  const assignEmployee = async (user: Employee) => {
+    const existing = team.map((u) => u.id);
+    const next = Array.from(new Set([...existing, user.id]));
+    await api.patch(`/api/projects/${id}`, { employeeIds: next });
+    setAvailable((prev) => prev.filter((e) => e.id !== user.id));
+    // reload team
+    const teamRes = await api.get(`/api/users`, { params: { projectId: id, size: 100 } });
+    setTeam(teamRes.data?.content || []);
+  };
+
+  const removeEmployee = async (user: Employee) => {
+    const remaining = team.filter((e) => e.id !== user.id).map((e) => e.id);
+    await api.patch(`/api/projects/${id}`, { employeeIds: remaining });
+    setTeam((prev) => prev.filter((e) => e.id !== user.id));
+  };
+
   const total = useMemo(() => {
     if (!estimate?.items) return 0;
     return estimate.items.reduce((sum, i) => sum + Number(i.total ?? 0), 0);
@@ -134,31 +180,100 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {!estimate ? (
-        <form onSubmit={createEstimate} className="flex flex-col gap-2 max-w-xl">
-          <h2 className="text-xl font-semibold">Создать смету</h2>
-          <input
-            placeholder="Название сметы"
-            className="border p-2 rounded"
-            value={createForm.title}
-            onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <input
-              placeholder="Валюта (например, RUB)"
-              className="border p-2 rounded"
-              value={createForm.currency}
-              onChange={(e) => setCreateForm({ ...createForm, currency: e.target.value.toUpperCase() })}
-            />
-            <input
-              placeholder="Заметки"
-              className="border p-2 rounded"
-              value={createForm.notes}
-              onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
-            />
+      {/* Project team management */}
+      <div className="card p-4 mb-6">
+        <h2 className="text-xl font-semibold mb-3">Команда проекта</h2>
+        <table className="table-box mb-4">
+          <thead className="table-head">
+            <tr>
+              <th className="th">Электронная почта</th>
+              <th className="th">Действия</th>
+            </tr>
+          </thead>
+          <tbody className="tbody-divide">
+            {team.map((u) => (
+              <tr key={u.id} className="row-hover">
+                <td className="td">{u.email}</td>
+                <td className="td">
+                  <button
+                    type="button"
+                    onClick={() => removeEmployee(u)}
+                    className="btn btn-danger btn-sm"
+                  >
+                    Удалить
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button
+          type="button"
+          onClick={toggleAdd}
+          className="mb-3 btn btn-primary btn-sm"
+        >
+          {showAdd ? "Скрыть доступных" : "Добавить работника"}
+        </button>
+        {showAdd && (
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Доступные работники</h3>
+            {available.length > 0 ? (
+              <ul className="rounded-lg bg-white shadow-sm">
+                {available.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex justify-between items-center px-3 py-2 border-b last:border-b-0 border-gray-100"
+                  >
+                    <span>{e.email}</span>
+                    <button type="button" onClick={() => assignEmployee(e)} className="btn btn-success btn-sm">
+                      Назначить
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-400">Нет доступных работников</p>
+            )}
           </div>
-          <button className="bg-green-600 text-white py-2 rounded" type="submit">Создать</button>
-        </form>
+        )}
+      </div>
+
+      {!estimate ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowCreateEstimate((v) => !v)}
+            className="mb-3 btn btn-success btn-md"
+          >
+            {showCreateEstimate ? "Скрыть форму" : "Создать смету"}
+          </button>
+          {showCreateEstimate && (
+            <form onSubmit={createEstimate} className="flex flex-col gap-2 max-w-xl">
+              <h2 className="text-xl font-semibold">Создать смету</h2>
+              <input
+                placeholder="Название сметы"
+                className="p-2 rounded bg-gray-100 border-0 focus:outline-none focus:ring-0 focus:border-transparent"
+                value={createForm.title}
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <input
+                  placeholder="Валюта (например, RUB)"
+                  className="p-2 rounded bg-gray-100 border-0 focus:outline-none focus:ring-0 focus:border-transparent"
+                  value={createForm.currency}
+                  onChange={(e) => setCreateForm({ ...createForm, currency: e.target.value.toUpperCase() })}
+                />
+                <input
+                  placeholder="Заметки"
+                  className="p-2 rounded bg-gray-100 border-0 focus:outline-none focus:ring-0 focus:border-transparent"
+                  value={createForm.notes}
+                  onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
+                />
+              </div>
+              <button className="bg-green-600 text-white py-2 rounded" type="submit">Создать</button>
+            </form>
+          )}
+        </div>
       ) : (
         <div>
           <div className="flex items-end justify-between gap-4 mb-4">
@@ -168,33 +283,33 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          <table className="min-w-full border mb-6 rounded">
-            <thead className="bg-gray-100">
+          <table className="table-box mb-6">
+            <thead className="table-head">
               <tr>
-                <th className="border px-2 py-1">Позиция</th>
-                <th className="border px-2 py-1">Материал</th>
-                <th className="border px-2 py-1">Ед.</th>
-                <th className="border px-2 py-1">Кол-во</th>
-                <th className="border px-2 py-1">Цена</th>
-                <th className="border px-2 py-1">Категория</th>
-                <th className="border px-2 py-1">Сумма</th>
-                <th className="border px-2 py-1">Действия</th>
+                <th className="th">Позиция</th>
+                <th className="th">Материал</th>
+                <th className="th">Ед.</th>
+                <th className="th">Кол-во</th>
+                <th className="th">Цена</th>
+                <th className="th">Категория</th>
+                <th className="th">Сумма</th>
+                <th className="th">Действия</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="tbody-divide">
               {estimate.items?.map((it) => (
-                <tr key={it.id} className="odd:bg-white even:bg-gray-50">
-                  <td className="border px-2 py-1">{it.positionNo}</td>
-                  <td className="border px-2 py-1">{it.materialName}</td>
-                  <td className="border px-2 py-1">{it.unit}</td>
-                  <td className="border px-2 py-1">{it.quantity}</td>
-                  <td className="border px-2 py-1">{it.unitPrice}</td>
-                  <td className="border px-2 py-1">{it.category}</td>
-                  <td className="border px-2 py-1">{it.total}</td>
-                  <td className="border px-2 py-1 text-center">
+                <tr key={it.id} className="row-hover">
+                  <td className="td">{it.positionNo}</td>
+                  <td className="td">{it.materialName}</td>
+                  <td className="td">{it.unit}</td>
+                  <td className="td">{it.quantity}</td>
+                  <td className="td">{it.unitPrice}</td>
+                  <td className="td">{it.category}</td>
+                  <td className="td">{it.total}</td>
+                  <td className="td">
                     <button
                       onClick={() => deleteItem(it.id)}
-                      className="text-sm bg-red-600 text-white px-2 py-1 rounded"
+                      className="btn btn-danger btn-sm"
                     >
                       Удалить
                     </button>
@@ -204,56 +319,67 @@ export default function ProjectDetailPage() {
             </tbody>
           </table>
 
-          <form onSubmit={addItem} className="flex flex-col gap-2 max-w-3xl">
-            <h3 className="text-lg font-semibold">Добавить позицию</h3>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
-              <input
-                placeholder="Материал"
-                className="border p-2 rounded"
-                value={newItem.materialName as string}
-                onChange={(e) => setNewItem({ ...newItem, materialName: e.target.value })}
-                required
-              />
-              <input
-                placeholder="Ед. изм."
-                className="border p-2 rounded"
-                value={newItem.unit as string}
-                onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
-              />
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Кол-во"
-                className="border p-2 rounded"
-                value={String(newItem.quantity ?? "")}
-                onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-              />
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Цена"
-                className="border p-2 rounded"
-                value={String(newItem.unitPrice ?? "")}
-                onChange={(e) => setNewItem({ ...newItem, unitPrice: e.target.value })}
-              />
-              <input
-                placeholder="Категория"
-                className="border p-2 rounded"
-                value={newItem.category as string}
-                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-              />
-              <input
-                type="number"
-                placeholder="№"
-                className="border p-2 rounded"
-                value={String(newItem.positionNo ?? "")}
-                onChange={(e) => setNewItem({ ...newItem, positionNo: Number(e.target.value) })}
-              />
-            </div>
-            <button className="bg-blue-600 text-white py-2 rounded" type="submit">
-              Добавить
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowAddItemForm((v) => !v)}
+              className="mb-3 bg-blue-600 text-white px-3 py-2 rounded"
+            >
+              {showAddItemForm ? "Скрыть форму добавления" : "Добавить позицию"}
             </button>
-          </form>
+            {showAddItemForm && (
+              <form onSubmit={addItem} className="flex flex-col gap-2 max-w-3xl">
+                <h3 className="text-lg font-semibold">Добавить позицию</h3>
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+                  <input
+                    placeholder="Материал"
+                    className="border p-2 rounded"
+                    value={newItem.materialName as string}
+                    onChange={(e) => setNewItem({ ...newItem, materialName: e.target.value })}
+                    required
+                  />
+                  <input
+                    placeholder="Ед. изм."
+                    className="border p-2 rounded"
+                    value={newItem.unit as string}
+                    onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Кол-во"
+                    className="border p-2 rounded"
+                    value={String(newItem.quantity ?? "")}
+                    onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Цена"
+                    className="border p-2 rounded"
+                    value={String(newItem.unitPrice ?? "")}
+                    onChange={(e) => setNewItem({ ...newItem, unitPrice: e.target.value })}
+                  />
+                  <input
+                    placeholder="Категория"
+                    className="border p-2 rounded"
+                    value={newItem.category as string}
+                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                  />
+                  <input
+                    type="number"
+                    placeholder="№"
+                    className="border p-2 rounded"
+                    value={String(newItem.positionNo ?? "")}
+                    onChange={(e) => setNewItem({ ...newItem, positionNo: Number(e.target.value) })}
+                  />
+                </div>
+                <button className="bg-blue-600 text-white py-2 rounded" type="submit">
+                  Добавить
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       )}
     </div>

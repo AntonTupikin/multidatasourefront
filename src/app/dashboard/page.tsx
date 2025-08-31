@@ -32,7 +32,7 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-bold mb-4">Панель управления</h1>
       {user && (
         <>
-          <div className="space-y-2 mb-6">
+          <div className="space-y-2 mb-6 rounded-lg bg-gray-50 p-4 shadow-sm">
             <p>
               <strong>Имя пользователя:</strong> {user.username}
             </p>
@@ -45,14 +45,14 @@ export default function DashboardPage() {
           </div>
           {user.role === "SUPERVISOR" && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <a href="/organizations" className="p-4 rounded border hover:bg-gray-50">Организации</a>
-              <a href="/clients" className="p-4 rounded border hover:bg-gray-50">Клиенты</a>
-              <a href="/projects" className="p-4 rounded border hover:bg-gray-50">Проекты</a>
+              <a href="/organizations" className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 shadow-sm transition-colors">Организации</a>
+              <a href="/clients" className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 shadow-sm transition-colors">Клиенты</a>
+              <a href="/projects" className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 shadow-sm transition-colors">Проекты</a>
             </div>
           )}
           {user.role === "ADMIN" && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <a href="/users" className="p-4 rounded border hover:bg-gray-50">Пользователи</a>
+              <a href="/users" className="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 shadow-sm transition-colors">Пользователи</a>
             </div>
           )}
         </>

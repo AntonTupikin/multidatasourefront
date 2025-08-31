@@ -34,20 +34,20 @@ export default function UsersPage() {
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Пользователи</h1>
-      <table className="min-w-full border rounded">
-        <thead className="bg-gray-100">
+      <table className="table-box">
+        <thead className="table-head">
           <tr>
-            <th className="border px-2 py-1">Имя пользователя</th>
-            <th className="border px-2 py-1">Электронная почта</th>
-            <th className="border px-2 py-1">Роль</th>
+            <th className="th">Имя пользователя</th>
+            <th className="th">Электронная почта</th>
+            <th className="th">Роль</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="tbody-divide">
           {users.map((u) => (
-            <tr key={u.id} className="odd:bg-white even:bg-gray-50">
-              <td className="border px-2 py-1">{u.username}</td>
-              <td className="border px-2 py-1">{u.email}</td>
-              <td className="border px-2 py-1">{u.role}</td>
+            <tr key={u.id} className="row-hover">
+              <td className="td">{u.username}</td>
+              <td className="td">{u.email}</td>
+              <td className="td">{u.role}</td>
             </tr>
           ))}
         </tbody>

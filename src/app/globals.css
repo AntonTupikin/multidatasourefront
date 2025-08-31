@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  --foreground: #171717;
+  --foreground: #292929;
 }
 
 @theme inline {
@@ -11,16 +11,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground: #0a0a0a;
+    --foreground: #292929;
   }
   body {
-    background: linear-gradient(to bottom right, #0a0a0a, #1f1f1f);
+    background: linear-gradient(to bottom right, #7d7d7d, #1f1f1f);
   }
 }
 
 body {
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #f0f4f8, #d9e2ec);
+  background: linear-gradient(to bottom right, #fafdff, #d9e2ec);
   color: var(--foreground);
   font-family: "Inter", sans-serif;
   line-height: 1.6;
@@ -31,9 +31,27 @@ button {
 }
 
 button:hover {
-  @apply opacity-90;
+  @apply opacity-80;
 }
 
 button:active {
-  @apply scale-95;
+  @apply scale-90;
 }
+
+/* Shared UI utilities */
+.card { @apply rounded-lg bg-gray-50 shadow-sm; }
+
+.table-box { @apply min-w-full overflow-hidden rounded-lg bg-white shadow-sm; }
+.table-head { @apply bg-gray-50; }
+.th { @apply px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide; }
+.td { @apply px-4 py-3 text-sm text-gray-800; }
+.tbody-divide { @apply divide-y divide-gray-100; }
+.row-hover { @apply hover:bg-gray-50; }
+
+.btn { @apply inline-flex items-center justify-center rounded shadow-sm text-white transition-colors; }
+.btn-sm { @apply px-2 py-1 text-sm; }
+.btn-md { @apply px-3 py-2; }
+.btn-lg { @apply px-4 py-2; }
+.btn-primary { @apply bg-blue-600 hover:bg-blue-700; }
+.btn-success { @apply bg-green-600 hover:bg-green-700; }
+.btn-danger { @apply bg-red-600 hover:bg-red-700; }

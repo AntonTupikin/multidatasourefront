@@ -277,62 +277,92 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {/* Project team management */}
-      <div className="card p-4 mb-6">
-        <h2 className="text-xl font-semibold mb-3">Команда проекта</h2>
-        <table className="table-box mb-4">
-          <thead className="table-head">
-            <tr>
-              <th className="th">Электронная почта</th>
-              <th className="th">Действия</th>
-            </tr>
-          </thead>
-          <tbody className="tbody-divide">
-            {team.map((u) => (
-              <tr key={u.id} className="row-hover">
-                <td className="td">{u.email}</td>
-                <td className="td">
-                  <button
-                    type="button"
-                    onClick={() => removeEmployee(u)}
-                    className="btn btn-danger btn-sm"
-                  >
-                    Удалить
-                  </button>
-                </td>
+      {/* Team + Partners side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 items-stretch">
+        <div className="card p-4 h-full">
+          <h2 className="text-xl font-semibold mb-3">Команда проекта</h2>
+          <table className="table-box mb-4">
+            <thead className="table-head">
+              <tr>
+                <th className="th">Электронная почта</th>
+                <th className="th">Действия</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <button
-          type="button"
-          onClick={toggleAdd}
-          className="mb-3 btn btn-primary btn-sm"
-        >
-          {showAdd ? "Скрыть доступных" : "Добавить работника"}
-        </button>
-        {showAdd && (
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Доступные работники</h3>
-            {available.length > 0 ? (
-              <ul className="rounded-lg bg-white shadow-sm">
-                {available.map((e) => (
-                  <li
-                    key={e.id}
-                    className="flex justify-between items-center px-3 py-2 border-b last:border-b-0 border-gray-100"
-                  >
-                    <span>{e.email}</span>
-                    <button type="button" onClick={() => assignEmployee(e)} className="btn btn-success btn-sm">
-                      Назначить
+            </thead>
+            <tbody className="tbody-divide">
+              {team.map((u) => (
+                <tr key={u.id} className="row-hover">
+                  <td className="td">{u.email}</td>
+                  <td className="td">
+                    <button
+                      type="button"
+                      onClick={() => removeEmployee(u)}
+                      className="btn btn-danger btn-sm"
+                    >
+                      Удалить
                     </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            type="button"
+            onClick={toggleAdd}
+            className="mb-3 btn btn-primary btn-sm"
+          >
+            {showAdd ? "Скрыть доступных" : "Добавить работника"}
+          </button>
+          {showAdd && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Доступные работники</h3>
+              {available.length > 0 ? (
+                <ul className="rounded-lg bg-white shadow-sm">
+                  {available.map((e) => (
+                    <li
+                      key={e.id}
+                      className="flex justify-between items-center px-3 py-2 border-b last:border-b-0 border-gray-100"
+                    >
+                      <span>{e.email}</span>
+                      <button type="button" onClick={() => assignEmployee(e)} className="btn btn-success btn-sm">
+                        Назначить
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-400">Нет доступных работников</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="card p-4 h-full">
+          <h2 className="text-xl font-semibold mb-3">Контрагенты проекта</h2>
+          {(() => {
+            const unique = new Map<number, string>();
+            (estimate?.items || []).forEach((it) => {
+              if (it.businessPartnerId != null) {
+                unique.set(Number(it.businessPartnerId), it.businessPartnerName || partners.find(p => p.id === it.businessPartnerId)?.name || `#${it.businessPartnerId}`);
+              }
+            });
+            const list = Array.from(unique, ([id, name]) => ({ id, name }));
+            return list.length ? (
+              <ul className="rounded-lg bg-white shadow-sm">
+                {list.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between px-3 py-2 border-b last:border-b-0 border-gray-100">
+                    <span className="truncate pr-3">{p.name}</span>
+                    <a className="text-blue-600 text-sm hover:underline" href="/partners">Все контрагенты</a>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-400">Нет доступных работников</p>
-            )}
+              <div className="text-sm text-gray-500">Нет контрагентов в позициях сметы</div>
+            );
+          })()}
+          <div className="mt-3">
+            <a href="/partners" className="btn btn-primary btn-sm">Перейти к контрагентам</a>
           </div>
-        )}
+        </div>
       </div>
 
       {!estimate ? (
